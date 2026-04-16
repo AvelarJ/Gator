@@ -1,4 +1,4 @@
-module example.com/gator
+module github.com/AvelarJ/Gator
 
 go 1.25.1
 

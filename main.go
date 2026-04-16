@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"example.com/gator/internal/config"
+	"github.com/AvelarJ/Gator/internal/config"
 )
 
 type state struct {
