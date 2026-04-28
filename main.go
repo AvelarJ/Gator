@@ -47,6 +47,16 @@ func (c *commands) register(name string, f func(*state, command) error) {
 
 // Handler functions for each command
 
+// REMINDER TO REMOVE - TESTING PURPOSES ONLY
+func handlerReset(s *state, _ command) error {
+	ctx := context.Background()
+	err := s.db.Reset(ctx)
+	if err != nil {
+		return fmt.Errorf("error resetting database: %w", err)
+	}
+	return nil
+}
+
 // Register a new user if not already in db
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.Args) < 1 {
@@ -56,7 +66,7 @@ func handlerRegister(s *state, cmd command) error {
 	ctx := context.Background()
 
 	uuid := uuid.New()
-	username := sql.NullString{String: cmd.Args[0], Valid: true}
+	username := cmd.Args[0]
 	//Check if username already exists
 	oldUser, err := s.db.GetUser(ctx, username)
 	if err == nil && oldUser.Name == username {
@@ -74,8 +84,8 @@ func handlerRegister(s *state, cmd command) error {
 		return fmt.Errorf("error creating user: %w", err)
 	}
 
-	s.cfg.SetUser(currUser.Name.String)
-	fmt.Println("Registered as", currUser.Name.String)
+	s.cfg.SetUser(currUser.Name)
+	fmt.Println("Registered as", currUser.Name)
 	fmt.Println(currUser)
 	return nil
 }
@@ -86,7 +96,7 @@ func handlerLogin(s *state, cmd command) error {
 		return fmt.Errorf("username required")
 	}
 
-	username := sql.NullString{String: cmd.Args[0], Valid: true}
+	username := cmd.Args[0]
 
 	ctx := context.Background()
 
@@ -96,9 +106,9 @@ func handlerLogin(s *state, cmd command) error {
 		os.Exit(1)
 	}
 
-	s.cfg.SetUser(username.String)
+	s.cfg.SetUser(username)
 
-	fmt.Println("Logged in as", username.String)
+	fmt.Println("Logged in as", username)
 	return nil
 }
 
@@ -128,6 +138,7 @@ func main() {
 	cmds := commands{Handlers: make(map[string]func(*state, command) error)}
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
 
 	// Parse command line arguments
 	args := os.Args
