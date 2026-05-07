@@ -15,6 +15,8 @@ import (
 	"github.com/AvelarJ/Gator/internal/database"
 
 	"github.com/AvelarJ/Gator/internal/config"
+
+	"github.com/AvelarJ/Gator/internal/rss"
 )
 
 type state struct {
@@ -112,6 +114,91 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+func handlerGetUsers(s *state, _ command) error {
+	ctx := context.Background()
+	users, err := s.db.GetUsers(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to run GetUsers command")
+	}
+	for _, user := range users {
+		if user.Name == s.cfg.Current_user {
+			fmt.Println("*", user.Name, "(current)")
+		} else {
+			fmt.Println("*", user.Name)
+		}
+	}
+	return nil
+}
+
+// In future will be used for aggregatting Multiple RSS feeds
+// Now only uses constant URL
+func handlerAgg(s *state, _ command) error {
+	const url = "https://www.wagslane.dev/index.xml"
+
+	ctx := context.Background()
+
+	feed, err := rss.FetchFeed(ctx, url)
+	if err != nil {
+		return fmt.Errorf("RSS feed unable to fetch")
+	}
+
+	// For now it will just print the feed data
+	fmt.Println(feed)
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	// At top get the current user
+	ctx := context.Background()
+	user, err := s.db.GetUser(ctx, s.cfg.Current_user)
+	if err != nil {
+		return fmt.Errorf("Unable to get current user")
+	}
+
+	// Check args
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("Usage: addfeed <name> <url>")
+	}
+	name := cmd.Args[0]
+	url := cmd.Args[1]
+
+	// Fetch the feed from the URL
+	feed, err := rss.FetchFeed(ctx, url)
+	if err != nil {
+		return fmt.Errorf("RSS feed unable to fetch")
+	}
+
+	// Create the feed in the database
+	_, err = s.db.CreateFeed(ctx, database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      name,
+		Url:       url,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to create feed", err)
+	}
+
+	fmt.Println(feed)
+
+	return nil
+}
+
+func handlerGetFeeds(s *state, _ command) error {
+	ctx := context.Background()
+
+	feeds, err := s.db.GetFeeds(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to get feeds", err)
+	}
+	for _, feed := range feeds {
+		fmt.Println(feed)
+	}
+	return nil
+}
+
 // Main function loop
 func main() {
 	conf, err := config.Read()
@@ -139,6 +226,10 @@ func main() {
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerGetUsers)
+	cmds.register("agg", handlerAgg)
+	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerGetFeeds)
 
 	// Parse command line arguments
 	args := os.Args
