@@ -47,6 +47,37 @@ func (c *commands) register(name string, f func(*state, command) error) {
 	c.Handlers[name] = f
 }
 
+// Agregation function to fetch the next feed in an interval
+func scrapeFeeds(s *state) error {
+	ctx := context.Background()
+
+	// Find the next feed to fetch
+	next, err := s.db.GetNextFeedToFetch(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetching next feed:", err)
+	}
+
+	// Now mark the feed as fetched
+	err = s.db.MarkFeedFetched(ctx, next.ID)
+	if err != nil {
+		return fmt.Errorf("error marking feed as fetched: %w", err)
+	}
+
+	// Now actually fetch the feed via url
+	feed, err := rss.FetchFeed(ctx, next.Url)
+	if err != nil {
+		return fmt.Errorf("error fetching feed: %w", err)
+	}
+
+	// Iterate over the feed and print the titles
+	for _, item := range feed.Channel.Item {
+		fmt.Println(item.Title)
+	}
+
+	return nil
+
+}
+
 // Handler functions for each command
 
 // REMINDER TO REMOVE - TESTING PURPOSES ONLY
@@ -114,6 +145,7 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+// Return a list of all users
 func handlerGetUsers(s *state, _ command) error {
 	ctx := context.Background()
 	users, err := s.db.GetUsers(ctx)
@@ -132,18 +164,27 @@ func handlerGetUsers(s *state, _ command) error {
 
 // In future will be used for aggregatting Multiple RSS feeds
 // Now only uses constant URL
-func handlerAgg(s *state, _ command) error {
-	const url = "https://www.wagslane.dev/index.xml"
-
-	ctx := context.Background()
-
-	feed, err := rss.FetchFeed(ctx, url)
+func handlerAgg(s *state, cmd command) error {
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("Usage: agg <interval> (eg. agg 10s)")
+	}
+	//ctx := context.Background()
+	interval, err := time.ParseDuration(cmd.Args[0])
 	if err != nil {
-		return fmt.Errorf("RSS feed unable to fetch")
+		return fmt.Errorf("Invalid interval: %w", err)
 	}
 
-	// For now it will just print the feed data
-	fmt.Println(feed)
+	fmt.Println("Collecting feeds every %s\n", interval)
+	// Create a ticker that will trigger scrapeFeeds over the given interval
+	ticker := time.NewTicker(interval)
+	for ; ; <-ticker.C {
+		err := scrapeFeeds(s)
+		if err != nil {
+			fmt.Println("Error scraping feeds:", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

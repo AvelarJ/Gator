@@ -10,7 +10,7 @@ import (
 )
 
 const getFeedUrl = `-- name: GetFeedUrl :one
-SELECT id, created_at, updated_at, name, url, user_id FROM feed WHERE url = $1 LIMIT 1
+SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feed WHERE url = $1 LIMIT 1
 `
 
 func (q *Queries) GetFeedUrl(ctx context.Context, url string) (Feed, error) {
@@ -23,6 +23,7 @@ func (q *Queries) GetFeedUrl(ctx context.Context, url string) (Feed, error) {
 		&i.Name,
 		&i.Url,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
