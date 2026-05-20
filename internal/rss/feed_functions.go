@@ -6,6 +6,8 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"regexp"
+	"strings"
 )
 
 type RSSFeed struct {
@@ -57,13 +59,16 @@ func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	return &feed, nil
 }
 
+var htmlTagRegex = regexp.MustCompile(`<[^>]+>`)
+
 func sanitizeHTML(input string) string {
-	return html.EscapeString(input)
+	stripped := htmlTagRegex.ReplaceAllString(input, "")
+	return html.UnescapeString(strings.TrimSpace(stripped))
 }
 
 func (item *RSSItem) Sanitize() {
 	item.Title = sanitizeHTML(item.Title)
-	item.Link = sanitizeHTML(item.Link)
+	//item.Link = sanitizeHTML(item.Link)
 	item.Description = sanitizeHTML(item.Description)
 }
 

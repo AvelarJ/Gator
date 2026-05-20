@@ -7,36 +7,32 @@ package database
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const getPostUser = `-- name: GetPostUser :many
-SELECT id, created_at, updated_at, name FROM users
-WHERE id = $1
+SELECT id, created_at, updated_at, title, url, description, published_at, feed_id FROM posts
 ORDER BY created_at DESC
-LIMIT $2
+LIMIT $1
 `
 
-type GetPostUserParams struct {
-	ID    uuid.UUID
-	Limit int32
-}
-
-func (q *Queries) GetPostUser(ctx context.Context, arg GetPostUserParams) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getPostUser, arg.ID, arg.Limit)
+func (q *Queries) GetPostUser(ctx context.Context, limit int32) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, getPostUser, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []Post
 	for rows.Next() {
-		var i User
+		var i Post
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Name,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.PublishedAt,
+			&i.FeedID,
 		); err != nil {
 			return nil, err
 		}

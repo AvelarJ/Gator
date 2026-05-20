@@ -1,5 +1,4 @@
 -- name: GetPostUser :many
-SELECT * FROM users
-WHERE id = $1
+SELECT * FROM posts
 ORDER BY created_at DESC
-LIMIT $2;
+LIMIT $1;

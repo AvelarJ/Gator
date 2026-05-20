@@ -8,9 +8,11 @@ import (
 
 	"github.com/google/uuid"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"database/sql"
+
+	"strconv"
 
 	"github.com/AvelarJ/Gator/internal/database"
 
@@ -91,6 +93,9 @@ func scrapeFeeds(s *state) error {
 			FeedID:      next.ID,
 		})
 		if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+				continue
+			}
 			return fmt.Errorf("error creating feed item: %w", err)
 		}
 	}
@@ -195,7 +200,7 @@ func handlerAgg(s *state, cmd command) error {
 		return fmt.Errorf("Invalid interval: %w", err)
 	}
 
-	fmt.Println("Collecting feeds every %s\n", interval)
+	fmt.Printf("Collecting feeds every %s\n", interval)
 	// Create a ticker that will trigger scrapeFeeds over the given interval
 	ticker := time.NewTicker(interval)
 	for ; ; <-ticker.C {
@@ -334,6 +339,36 @@ func handlerFeedUnfollow(s *state, cmd command, user database.User) error {
 
 }
 
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	// Limit is optional, default to 2 if not provided
+	var limit int
+	if len(cmd.Args) != 1 {
+		limit = 2
+	} else { // Limit provided, convert to int
+		var err error
+		limit, err = strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("Invalid limit: %w", err)
+		}
+	}
+
+	ctx := context.Background()
+	// Get posts from database
+	posts, err := s.db.GetPostUser(ctx, int32(limit))
+	if err != nil {
+		return fmt.Errorf("Error retrieving posts: %w", err)
+	}
+	// Print posts
+	for _, post := range posts {
+		fmt.Printf("Title: %s\n", post.Title)
+		fmt.Printf("URL: %s\n", post.Url)
+		fmt.Printf("Description: %s\n", post.Description.String)
+		fmt.Printf("PublishedAt: %s\n", post.PublishedAt.Time.String())
+		fmt.Println()
+	}
+	return nil
+}
+
 // MIDDLEWARE
 // Middleware to add a logged in check higher function to the handlers that need it
 func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
@@ -380,6 +415,7 @@ func main() {
 	cmds.register("follow", middlewareLoggedIn(handlerFeedFollow))
 	cmds.register("following", middlewareLoggedIn(handlerFollowingForUser))
 	cmds.register("unfollow", middlewareLoggedIn(handlerFeedUnfollow))
+	cmds.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	// Parse command line arguments
 	args := os.Args
