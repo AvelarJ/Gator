@@ -71,7 +71,28 @@ func scrapeFeeds(s *state) error {
 
 	// Iterate over the feed and print the titles
 	for _, item := range feed.Channel.Item {
-		fmt.Println(item.Title)
+		//fmt.Println(item.Title)
+		// Need to fix publishedAt as it could be dif formats
+		publishedAt, err := time.Parse(time.RFC1123, item.PubDate)
+		if err != nil {
+			return fmt.Errorf("error parsing publishedAt: %w", err)
+		}
+
+		// Need to check if url is unique and if so ignore it
+
+		_, err = s.db.CreatePost(ctx, database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: sql.NullString{String: item.Description, Valid: true},
+			PublishedAt: sql.NullTime{Time: publishedAt, Valid: true},
+			FeedID:      next.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating feed item: %w", err)
+		}
 	}
 
 	return nil
