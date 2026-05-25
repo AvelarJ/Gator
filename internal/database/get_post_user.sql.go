@@ -11,7 +11,7 @@ import (
 
 const getPostUser = `-- name: GetPostUser :many
 SELECT id, created_at, updated_at, title, url, description, published_at, feed_id FROM posts
-ORDER BY created_at DESC
+ORDER BY published_at DESC
 LIMIT $1
 `
 

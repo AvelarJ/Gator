@@ -11,7 +11,7 @@ import (
 
 const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feed
-ORDER BY last_fetched_at ASC, last_fetched_at NULLS FIRST
+ORDER BY last_fetched_at ASC NULLS FIRST
 `
 
 func (q *Queries) GetNextFeedToFetch(ctx context.Context) (Feed, error) {
