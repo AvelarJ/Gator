@@ -188,7 +188,7 @@ func handlerGetUsers(s *state, _ command) error {
 	return nil
 }
 
-// In future will be used for aggregatting Multiple RSS feeds
+// In future will be used for aggregating Multiple RSS feeds
 // Now only uses constant URL
 func handlerAgg(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
@@ -200,6 +200,7 @@ func handlerAgg(s *state, cmd command) error {
 		return fmt.Errorf("Invalid interval: %w", err)
 	}
 
+	fmt.Println("NOTE: This command is currently blocking and will run indefinitely, use Ctrl+C to stop it")
 	fmt.Printf("Collecting feeds every %s\n", interval)
 	// Create a ticker that will trigger scrapeFeeds over the given interval
 	ticker := time.NewTicker(interval)

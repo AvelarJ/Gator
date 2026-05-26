@@ -23,10 +23,46 @@ go install github.com/pressly/goose/v3/cmd/goose@latest
 ## Installation
 
 ```bash
-go install github.com/AvelarJ/Gator@latest
+go install github.com/AvelarJ/Gator
 ```
 
 Make sure `$HOME/go/bin` (or `$GOPATH/bin`) is on your `$PATH` so the `gator` binary is accessible.
+
+# PostgreSQL
+
+(Use `brew` for Mac and check https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-database#install-postgresql for WSL/Linux)
+
+Verify instal worked:
+```bash
+psql --version
+```
+
+NOTE: (Linux / WSL only) Update postgres password (I used 'postgres'):
+```bash
+sudo passwd postgres
+```
+
+Start the postgres server in the background:
+Mac
+```bash
+psql postgres
+```
+WSL/Linus
+```bash
+sudo -u postgres psql
+```
+
+Create a new database called `gator`
+```bash
+CREATE DATABASE gator;
+```
+
+Set the user password (Linux / WSL only)
+```bash
+ALTER USER postgres PASSWORD 'postgres';
+```
+
+The Postgres database should now be ready!
 
 ---
 
@@ -40,7 +76,7 @@ Gator reads its configuration from `~/.gatorconfig.json`. Create this file befor
 }
 ```
 
-Replace `user`, `password`, and `gator` with your actual PostgreSQL credentials and database name. The `current_user_name` field is managed automatically when you `register` or `login`.
+Replace `user`, `password`, and `gator` with your actual PostgreSQL credentials and database name (WSL: `user` and `password` were both postgres for my simplicity). The `current_user_name` field is managed automatically when you `register` or `login`.
 
 ---
 
@@ -97,15 +133,22 @@ This creates four tables: `users`, `feed`, `feed_follows`, and `posts`.
 
 ```bash
 # 1. Register a user
-gator register alice
+Gator register alice
 
 # 2. Add a feed (it will be automatically followed)
-gator addfeed "Go Blog" "https://go.dev/blog/feed.atom"
-gator addfeed "Hacker News" "https://news.ycombinator.com/rss"
+Gator addfeed "Top stories - Google News" "https://news.google.com/rss"
+Gator addfeed "Hacker News" "https://news.ycombinator.com/rss"
 
-# 3. Start aggregating in the background
-gator agg 30s &
+# 3. Start aggregating (NOTE ctrl + c to stop)
+Gator agg 30s
 
 # 4. Browse your posts
-gator browse 10
+Gator browse 10
 ```
+
+## Possible Additions to come
+
+- Sorting and filtering for `browse`
+- Add a `search` command
+- Add bookmarking or like posts
+- Add a TUI to allow selecting and viewing each post in a better format
