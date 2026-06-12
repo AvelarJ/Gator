@@ -1,6 +1,6 @@
 # Gator
 
-A command-line RSS feed aggregator written in Go. Gator lets you register users, subscribe to RSS feeds, aggregate posts in the background on a schedule, and browse the latest content — all backed by a PostgreSQL database.
+A command-line RSS feed aggregator written in Go. Gator lets you register users, subscribe to RSS feeds, aggregate posts in the background on a schedule, and browse the latest content, all backed by a PostgreSQL database.
 
 ---
 
@@ -8,9 +8,9 @@ A command-line RSS feed aggregator written in Go. Gator lets you register users,
 
 Before installing Gator, make sure you have the following:
 
-- **Go** (1.21 or later) — verify with `go version`
-- **PostgreSQL** — a running instance with a database created for Gator
-- **Goose** — used to run database migrations
+- **Go** (1.21 or later) - verify with `go version`
+- **PostgreSQL** - a running instance with a database created for Gator
+- **Goose** - used to run database migrations
 
 Install Goose with:
 
@@ -32,7 +32,7 @@ Make sure `$HOME/go/bin` (or `$GOPATH/bin`) is on your `$PATH` so the `gator` bi
 
 (Use `brew` for Mac and check https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-database#install-postgresql for WSL/Linux)
 
-Verify instal worked:
+Verify install worked:
 ```bash
 psql --version
 ```
@@ -42,7 +42,7 @@ NOTE: (Linux / WSL only) Update postgres password (I used 'postgres'):
 sudo passwd postgres
 ```
 
-Start the postgres server in the background:
+Start the PostgreSQL server in the background:
 Mac
 ```bash
 psql postgres
